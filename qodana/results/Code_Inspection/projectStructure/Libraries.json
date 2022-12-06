@@ -1,9 +1,9 @@
 {
   "libraries": [
     {
-      "name": "Gradle: info.picocli:picocli-spring-boot-starter:4.6.3",
+      "name": "Gradle: info.picocli:picocli-spring-boot-starter:4.7.0",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/info.picocli/picocli-spring-boot-starter/4.6.3/26c99a71fa654809fcd6edc522176ba4b520c307/picocli-spring-boot-starter-4.6.3.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/info.picocli/picocli-spring-boot-starter/4.7.0/1270197930d1b8abbb312359567d53e229ccdd16/picocli-spring-boot-starter-4.7.0.jar!/"
       ]
     },
     {
@@ -37,9 +37,9 @@
       ]
     },
     {
-      "name": "Gradle: com.github.1c-syntax:utils:0.4.0",
+      "name": "Gradle: com.github.1c-syntax:utils:f1694d9c",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/com.github.1c-syntax/utils/0.4.0/6d29fe162d62fa3724ba0cc44b00f394ae35d93f/utils-0.4.0.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/com.github.1c-syntax/utils/f1694d9c/79595547e6d0250f59ccfe8eae4689713ad33f3/utils-f1694d9c.jar!/"
       ]
     },
     {
@@ -151,15 +151,15 @@
       ]
     },
     {
-      "name": "Gradle: io.sentry:sentry-spring-boot-starter:6.6.0",
+      "name": "Gradle: io.sentry:sentry-spring-boot-starter:6.9.1",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring-boot-starter/6.6.0/a351721b654b1eb70c9850da5c8a91a0ced05a30/sentry-spring-boot-starter-6.6.0.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring-boot-starter/6.9.1/5e7b33bf670a6b1156abc20d5934d4ecf9041850/sentry-spring-boot-starter-6.9.1.jar!/"
       ]
     },
     {
-      "name": "Gradle: io.sentry:sentry-logback:6.6.0",
+      "name": "Gradle: io.sentry:sentry-logback:6.9.1",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry-logback/6.6.0/c0f95f27797bbc9ddc2866b3d38d6a8d4805d1b9/sentry-logback-6.6.0.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry-logback/6.9.1/c29ec77b65fe47ed04718f2fdb2733640c2c623a/sentry-logback-6.9.1.jar!/"
       ]
     },
     {
@@ -169,9 +169,9 @@
       ]
     },
     {
-      "name": "Gradle: info.picocli:picocli:4.6.3",
+      "name": "Gradle: info.picocli:picocli:4.7.0",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/info.picocli/picocli/4.6.3/18177f4c3d65cc94e6d4039775ec5aed8089f8d0/picocli-4.6.3.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/info.picocli/picocli/4.7.0/dcdde55edcb523af7814ba47e57a8a097daa208d/picocli-4.7.0.jar!/"
       ]
     },
     {
@@ -535,15 +535,15 @@
       ]
     },
     {
-      "name": "Gradle: io.sentry:sentry-spring:6.6.0",
+      "name": "Gradle: io.sentry:sentry-spring:6.9.1",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring/6.6.0/bd1a4c7af3657702be2b348314bc4d7d156cff9a/sentry-spring-6.6.0.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry-spring/6.9.1/f6560209bf2b5cf363f47dd890e3ebcc14b3f34c/sentry-spring-6.9.1.jar!/"
       ]
     },
     {
-      "name": "Gradle: io.sentry:sentry:6.6.0",
+      "name": "Gradle: io.sentry:sentry:6.9.1",
       "roots": [
-        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry/6.6.0/419771769d753bdc072c04fe7c572485d1566e95/sentry-6.6.0.jar!/"
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/io.sentry/sentry/6.9.1/3e8a0a914d11aee2a5c50c0321b55fb9e7d78f4f/sentry-6.9.1.jar!/"
       ]
     },
     {
@@ -1090,6 +1090,48 @@
       "name": "Gradle: org.junit.platform:junit-platform-engine:1.8.2",
       "roots": [
         "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-engine/1.8.2/b737de09f19864bd136805c84df7999a142fec29/junit-platform-engine-1.8.2.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: org.openjdk.jmh:jmh-generator-bytecode:1.35",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.openjdk.jmh/jmh-generator-bytecode/1.35/7166e8997f2a0ec00d4b98094f54b98782c3cf7c/jmh-generator-bytecode-1.35.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: org.openjdk.jmh:jmh-core:1.35",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.openjdk.jmh/jmh-core/1.35/c14d712be8e423969fcd344bc801cf5d3ea3b62a/jmh-core-1.35.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: org.openjdk.jmh:jmh-generator-asm:1.35",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.openjdk.jmh/jmh-generator-asm/1.35/e2fd46dc4440637a6a1d233cf47899ffc4d16fc7/jmh-generator-asm-1.35.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: org.openjdk.jmh:jmh-generator-reflection:1.35",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.openjdk.jmh/jmh-generator-reflection/1.35/f4bdae9b13e44cf2b7b13aba82b6a4d934d80348/jmh-generator-reflection-1.35.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: net.sf.jopt-simple:jopt-simple:5.0.4",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.4/4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c/jopt-simple-5.0.4.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: org.apache.commons:commons-math3:3.2",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.apache.commons/commons-math3/3.2/ec2544ab27e110d2d431bdad7d538ed509b21e62/commons-math3-3.2.jar!/"
+      ]
+    },
+    {
+      "name": "Gradle: org.ow2.asm:asm:9.0",
+      "roots": [
+        "jar://$PROJECT_DIR$/../cache/gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.0/af582ff60bc567c42d931500c3fdc20e0141ddf9/asm-9.0.jar!/"
       ]
     }
   ]
