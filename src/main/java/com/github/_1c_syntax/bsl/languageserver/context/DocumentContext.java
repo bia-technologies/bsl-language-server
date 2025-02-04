@@ -1,7 +1,7 @@
 /*
  * This file is a part of BSL Language Server.
  *
- * Copyright (c) 2018-2022
+ * Copyright (c) 2018-2025
  * Alexey Sosnoviy <labotamy@gmail.com>, Nikita Fedkin <nixel2007@gmail.com> and contributors
  *
  * SPDX-License-Identifier: LGPL-3.0-or-later
@@ -33,17 +33,20 @@ import com.github._1c_syntax.bsl.languageserver.context.computer.SymbolTreeCompu
 import com.github._1c_syntax.bsl.languageserver.context.symbol.MethodSymbol;
 import com.github._1c_syntax.bsl.languageserver.context.symbol.SymbolTree;
 import com.github._1c_syntax.bsl.languageserver.utils.Trees;
+import com.github._1c_syntax.bsl.mdo.MD;
 import com.github._1c_syntax.bsl.mdo.support.ScriptVariant;
 import com.github._1c_syntax.bsl.parser.BSLLexer;
 import com.github._1c_syntax.bsl.parser.BSLParser;
 import com.github._1c_syntax.bsl.parser.BSLTokenizer;
 import com.github._1c_syntax.bsl.parser.SDBLTokenizer;
-import com.github._1c_syntax.bsl.supconf.SupportConfiguration;
 import com.github._1c_syntax.bsl.support.SupportVariant;
 import com.github._1c_syntax.bsl.types.ConfigurationSource;
 import com.github._1c_syntax.bsl.types.ModuleType;
-import com.github._1c_syntax.mdclasses.mdo.AbstractMDObjectBase;
 import com.github._1c_syntax.utils.Lazy;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import jakarta.annotation.PostConstruct;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -59,20 +62,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.antlr.v4.runtime.Token.DEFAULT_CHANNEL;
@@ -81,16 +81,20 @@ import static org.antlr.v4.runtime.Token.DEFAULT_CHANNEL;
 @Scope("prototype")
 @RequiredArgsConstructor
 @Slf4j
-public class DocumentContext {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class DocumentContext implements Comparable<DocumentContext> {
 
   private static final Pattern CONTENT_SPLIT_PATTERN = Pattern.compile("\r?\n|\r");
 
   @Getter
+  @EqualsAndHashCode.Include
   private final URI uri;
 
   @Nullable
   private String content;
+
   @Getter
+  @EqualsAndHashCode.Include
   private int version;
 
   @Setter(onMethod = @__({@Autowired}))
@@ -120,8 +124,6 @@ public class DocumentContext {
 
   private final Lazy<String[]> contentList = new Lazy<>(this::computeContentList, computeLock);
   private final Lazy<ModuleType> moduleType = new Lazy<>(this::computeModuleType, computeLock);
-  private final Lazy<Map<SupportConfiguration, SupportVariant>> supportVariants
-    = new Lazy<>(this::computeSupportVariants, computeLock);
   private final Lazy<ComplexityData> cognitiveComplexityData
     = new Lazy<>(this::computeCognitiveComplexity, computeLock);
   private final Lazy<ComplexityData> cyclomaticComplexityData
@@ -162,13 +164,13 @@ public class DocumentContext {
   }
 
   public List<Token> getTokensFromDefaultChannel() {
-    return getTokens().stream().filter(token -> token.getChannel() == DEFAULT_CHANNEL).collect(Collectors.toList());
+    return getTokens().stream().filter(token -> token.getChannel() == DEFAULT_CHANNEL).toList();
   }
 
   public List<Token> getComments() {
     return getTokens().stream()
       .filter(token -> token.getType() == BSLLexer.LINE_COMMENT)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   public String getText(Range range) {
@@ -240,13 +242,12 @@ public class DocumentContext {
     return moduleType.getOrCompute();
   }
 
-  public Map<SupportConfiguration, SupportVariant> getSupportVariants() {
-    return supportVariants.getOrCompute();
+  public SupportVariant getSupportVariant() {
+    return getMdObject().map(MD::getSupportVariant).orElse(SupportVariant.NONE);
   }
 
-  public Optional<AbstractMDObjectBase> getMdObject() {
-    return Optional
-      .ofNullable((AbstractMDObjectBase) getServerContext().getConfiguration().getModulesByObject().get(getUri()));
+  public Optional<MD> getMdObject() {
+    return getServerContext().getConfiguration().findChild(getUri());
   }
 
   public List<SDBLTokenizer> getQueries() {
@@ -274,24 +275,29 @@ public class DocumentContext {
   protected void rebuild(String content, int version) {
     computeLock.lock();
 
-    boolean versionMatches = version == this.version && version != 0;
+    try {
 
-    if (versionMatches && (this.content != null)) {
-      clearDependantData();
+      boolean versionMatches = version == this.version && version != 0;
+
+      if (versionMatches && (this.content != null)) {
+        clearDependantData();
+        computeLock.unlock();
+        return;
+      }
+
+      if (!isComputedDataFrozen) {
+        clearSecondaryData();
+      }
+
+      this.content = content;
+      tokenizer = new BSLTokenizer(content);
+      this.version = version;
+      symbolTree = computeSymbolTree();
+
+    } finally {
       computeLock.unlock();
-      return;
     }
 
-    if (!isComputedDataFrozen) {
-      clearSecondaryData();
-    }
-
-    this.content = content;
-    tokenizer = new BSLTokenizer(content);
-    this.version = version;
-    symbolTree = computeSymbolTree();
-
-    computeLock.unlock();
   }
 
   protected void rebuild() {
@@ -306,29 +312,35 @@ public class DocumentContext {
   protected void clearSecondaryData() {
     computeLock.lock();
 
-    content = null;
-    contentList.clear();
-    tokenizer = null;
-    queries.clear();
-    clearDependantData();
+    try {
 
-    if (!isComputedDataFrozen) {
-      cognitiveComplexityData.clear();
-      cyclomaticComplexityData.clear();
-      metrics.clear();
-      diagnosticIgnoranceData.clear();
+      content = null;
+      contentList.clear();
+      tokenizer = null;
+      queries.clear();
+      clearDependantData();
+
+      if (!isComputedDataFrozen) {
+        cognitiveComplexityData.clear();
+        cyclomaticComplexityData.clear();
+        metrics.clear();
+        diagnosticIgnoranceData.clear();
+      }
+    } finally {
+      computeLock.unlock();
     }
-    computeLock.unlock();
   }
 
   private void clearDependantData() {
     computeLock.lock();
     diagnosticsLock.lock();
 
-    diagnostics.clear();
-
-    diagnosticsLock.unlock();
-    computeLock.unlock();
+    try {
+      diagnostics.clear();
+    } finally {
+      diagnosticsLock.unlock();
+      computeLock.unlock();
+    }
   }
 
   private static FileType computeFileType(URI uri) {
@@ -359,11 +371,7 @@ public class DocumentContext {
 
 
   private ModuleType computeModuleType() {
-    return context.getConfiguration().getModuleType(uri);
-  }
-
-  private Map<SupportConfiguration, SupportVariant> computeSupportVariants() {
-    return context.getConfiguration().getModuleSupport(uri);
+    return context.getConfiguration().getModuleTypeByURI(uri);
   }
 
   private ComplexityData computeCognitiveComplexity() {
@@ -427,4 +435,10 @@ public class DocumentContext {
     return (new QueryComputer(this)).compute();
   }
 
+  @Override
+  public int compareTo(@NonNull DocumentContext other) {
+    return Comparator.comparing(DocumentContext::getUri)
+      .thenComparing(DocumentContext::getVersion)
+      .compare(this, other);
+  }
 }

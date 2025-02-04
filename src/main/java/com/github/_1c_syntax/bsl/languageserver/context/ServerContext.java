@@ -1,7 +1,7 @@
 /*
  * This file is a part of BSL Language Server.
  *
- * Copyright (c) 2018-2022
+ * Copyright (c) 2018-2025
  * Alexey Sosnoviy <labotamy@gmail.com>, Nikita Fedkin <nixel2007@gmail.com> and contributors
  *
  * SPDX-License-Identifier: LGPL-3.0-or-later
@@ -24,11 +24,14 @@ package com.github._1c_syntax.bsl.languageserver.context;
 import com.github._1c_syntax.bsl.languageserver.WorkDoneProgressHelper;
 import com.github._1c_syntax.bsl.languageserver.configuration.LanguageServerConfiguration;
 import com.github._1c_syntax.bsl.languageserver.utils.MdoRefBuilder;
+import com.github._1c_syntax.bsl.languageserver.utils.NamedForkJoinWorkerThreadFactory;
 import com.github._1c_syntax.bsl.languageserver.utils.Resources;
+import com.github._1c_syntax.bsl.mdclasses.CF;
+import com.github._1c_syntax.bsl.mdclasses.MDClasses;
 import com.github._1c_syntax.bsl.types.ModuleType;
-import com.github._1c_syntax.mdclasses.Configuration;
 import com.github._1c_syntax.utils.Absolute;
 import com.github._1c_syntax.utils.Lazy;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +39,6 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.CheckForNull;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
@@ -62,8 +64,8 @@ public class ServerContext {
   private final LanguageServerConfiguration languageServerConfiguration;
 
   private final Map<URI, DocumentContext> documents = Collections.synchronizedMap(new HashMap<>());
-  private final Lazy<Configuration> configurationMetadata = new Lazy<>(this::computeConfigurationMetadata);
-  @CheckForNull
+  private final Lazy<CF> configurationMetadata = new Lazy<>(this::computeConfigurationMetadata);
+  @Nullable
   @Setter
   private Path configurationRoot;
   private final Map<URI, String> mdoRefs = Collections.synchronizedMap(new HashMap<>());
@@ -103,21 +105,25 @@ public class ServerContext {
     LOGGER.debug("Populating context...");
     contextLock.writeLock().lock();
 
-    files.parallelStream().forEach((File file) -> {
+    try {
 
-      workDoneProgressReporter.tick();
+      files.parallelStream().forEach((File file) -> {
 
-      var uri = file.toURI();
-      var documentContext = getDocument(uri);
-      if (documentContext == null) {
-        documentContext = createDocumentContext(uri);
-        rebuildDocument(documentContext);
-        documentContext.freezeComputedData();
-        tryClearDocument(documentContext);
-      }
-    });
+        workDoneProgressReporter.tick();
 
-    contextLock.writeLock().unlock();
+        var uri = file.toURI();
+        var documentContext = getDocument(uri);
+        if (documentContext == null) {
+          documentContext = createDocumentContext(uri);
+          rebuildDocument(documentContext);
+          documentContext.freezeComputedData();
+          tryClearDocument(documentContext);
+        }
+      });
+
+    } finally {
+      contextLock.writeLock().unlock();
+    }
 
     workDoneProgressReporter.endProgress(getMessage("populateContextPopulated"));
     LOGGER.debug("Context populated.");
@@ -127,7 +133,7 @@ public class ServerContext {
     return Collections.unmodifiableMap(documents);
   }
 
-  @CheckForNull
+  @Nullable
   public DocumentContext getDocument(String uri) {
     return getDocument(URI.create(uri));
   }
@@ -140,7 +146,7 @@ public class ServerContext {
     return Optional.empty();
   }
 
-  @CheckForNull
+  @Nullable
   public DocumentContext getDocument(URI uri) {
     return documents.get(Absolute.uri(uri));
   }
@@ -253,7 +259,7 @@ public class ServerContext {
     documentContext.clearSecondaryData();
   }
 
-  public Configuration getConfiguration() {
+  public CF getConfiguration() {
     return configurationMetadata.getOrCompute();
   }
 
@@ -268,24 +274,26 @@ public class ServerContext {
     return documentContext;
   }
 
-  private Configuration computeConfigurationMetadata() {
+  private CF computeConfigurationMetadata() {
     if (configurationRoot == null) {
-      return Configuration.create();
+      return (CF) MDClasses.createConfiguration();
     }
 
     var progress = workDoneProgressHelper.createProgress(0, "");
     progress.beginProgress(getMessage("computeConfigurationMetadata"));
 
-    Configuration configuration;
-    var executorService = new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
+    var factory = new NamedForkJoinWorkerThreadFactory("compute-configuration-");
+    var executorService = new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism(), factory, null, true);
+
+    CF configuration;
     try {
-      configuration = executorService.submit(() -> Configuration.create(configurationRoot)).get();
+      configuration = (CF) executorService.submit(() -> MDClasses.createConfiguration(configurationRoot)).get();
     } catch (ExecutionException e) {
       LOGGER.error("Can't parse configuration metadata. Execution exception.", e);
-      configuration = Configuration.create();
+      configuration = (CF) MDClasses.createConfiguration();
     } catch (InterruptedException e) {
       LOGGER.error("Can't parse configuration metadata. Interrupted exception.", e);
-      configuration = Configuration.create();
+      configuration = (CF) MDClasses.createConfiguration();
       Thread.currentThread().interrupt();
     } finally {
       executorService.shutdown();

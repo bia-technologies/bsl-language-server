@@ -1,7 +1,7 @@
 /*
  * This file is a part of BSL Language Server.
  *
- * Copyright (c) 2018-2022
+ * Copyright (c) 2018-2025
  * Alexey Sosnoviy <labotamy@gmail.com>, Nikita Fedkin <nixel2007@gmail.com> and contributors
  *
  * SPDX-License-Identifier: LGPL-3.0-or-later
@@ -26,7 +26,6 @@ import com.github._1c_syntax.utils.GenericInterner;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
-import org.jetbrains.annotations.NotNull;
 import org.eclipse.lsp4j.SymbolKind;
 
 /**
@@ -42,7 +41,7 @@ public class Symbol implements Comparable<Symbol> {
   private static GenericInterner<Symbol> interner = new GenericInterner<>();
 
   /**
-   * Cсылка на объект метаданных в формате ВидОбъектаМетаданных.ИмяОбъекта, в котором расположен символ.
+   * Ссылка на объект метаданных в формате ВидОбъектаМетаданных.ИмяОбъекта, в котором расположен символ.
    */
   String mdoRef;
 
@@ -71,7 +70,7 @@ public class Symbol implements Comparable<Symbol> {
   }
 
   @Override
-  public int compareTo(@NotNull Symbol o) {
+  public int compareTo(Symbol o) {
     if (this.equals(o)) {
       return 0;
     }
@@ -99,5 +98,4 @@ public class Symbol implements Comparable<Symbol> {
     compareResult = symbolName.compareTo(o.symbolName);
     return compareResult;
   }
-
 }

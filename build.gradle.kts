@@ -1,6 +1,8 @@
+import gradlegitproperties.org.ajoberstar.grgit.Grgit
 import me.qoomon.gitversioning.commons.GitRefType
 import org.apache.tools.ant.filters.EscapeUnicode
 import java.util.*
+import java.text.SimpleDateFormat
 
 plugins {
     `java-library`
@@ -8,27 +10,29 @@ plugins {
     jacoco
     signing
     id("org.cadixdev.licenser") version "0.6.1"
-    id("org.sonarqube") version "3.5.0.2730"
-    id("io.freefair.lombok") version "6.6"
-    id("io.freefair.javadoc-links") version "6.6"
-    id("io.freefair.javadoc-utf-8") version "6.6"
-    id("io.freefair.aspectj.post-compile-weaving") version "6.6"
-    id("io.freefair.maven-central.validate-poms") version "6.6"
-    id("me.qoomon.git-versioning") version "6.3.7"
-    id("com.github.ben-manes.versions") version "0.44.0"
-    id("org.springframework.boot") version "2.7.5"
-    id("io.spring.dependency-management") version "1.1.0"
-    id("io.github.1c-syntax.bslls-dev-tools") version "0.7.1"
-    id("ru.vyarus.pom") version "2.2.2"
-    id("com.gorylenko.gradle-git-properties") version "2.4.1"
+    id("org.sonarqube") version "6.0.1.5171"
+    id("io.freefair.lombok") version "8.12.1"
+    id("io.freefair.javadoc-links") version "8.12.1"
+    id("io.freefair.javadoc-utf-8") version "8.12.1"
+    id("io.freefair.aspectj.post-compile-weaving") version "8.12.1"
+    id("io.freefair.maven-central.validate-poms") version "8.12.1"
+    id("me.qoomon.git-versioning") version "6.4.4"
+    id("com.github.ben-manes.versions") version "0.52.0"
+    id("org.springframework.boot") version "3.4.2"
+    id("io.spring.dependency-management") version "1.1.7"
+    id("io.github.1c-syntax.bslls-dev-tools") version "0.8.1"
+    id("ru.vyarus.pom") version "3.0.0"
+    id("com.gorylenko.gradle-git-properties") version "2.4.2"
     id("io.codearte.nexus-staging") version "0.30.0"
-    id("me.champeau.jmh") version "0.6.8"
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
     maven(url = "https://jitpack.io")
+    maven(url = "https://projectlombok.org/edge-releases")
+    maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots")
 }
 
 group = "io.github.1c-syntax"
@@ -49,13 +53,17 @@ gitVersioning.apply {
     }
 }
 
+gitProperties {
+    customProperty("git.build.time", buildTime())
+}
+
 val isSnapshot = gitVersioning.gitVersionDetails.refType != GitRefType.TAG
 
-val languageToolVersion = "5.6"
+val languageToolVersion = "6.5"
 
 dependencyManagement {
     imports {
-        mavenBom("io.sentry:sentry-bom:6.9.2")
+        mavenBom("io.sentry:sentry-bom:8.1.0")
     }
 }
 
@@ -66,61 +74,73 @@ dependencies {
     // spring
     api("org.springframework.boot:spring-boot-starter")
     api("org.springframework.boot:spring-boot-starter-websocket")
-    api("info.picocli:picocli-spring-boot-starter:4.7.0")
+    api("info.picocli:picocli-spring-boot-starter:4.7.6")
 
     // lsp4j core
-    api("org.eclipse.lsp4j", "org.eclipse.lsp4j", "0.17.0")
-    api("org.eclipse.lsp4j", "org.eclipse.lsp4j.websocket", "0.17.0")
+    api("org.eclipse.lsp4j", "org.eclipse.lsp4j", "0.23.1")
+    api("org.eclipse.lsp4j", "org.eclipse.lsp4j.websocket.jakarta", "0.23.1")
 
     // 1c-syntax
-    api("com.github.1c-syntax", "bsl-parser", "167aaad827322e09ccde4658a71152dad234de4b") {
+    api("io.github.1c-syntax", "bsl-parser", "0.24.0") {
         exclude("com.tunnelvisionlabs", "antlr4-annotations")
         exclude("com.ibm.icu", "*")
         exclude("org.antlr", "ST4")
         exclude("org.abego.treelayout", "org.abego.treelayout.core")
         exclude("org.antlr", "antlr-runtime")
-        exclude("org.glassfish", "javax.json")
     }
-    api("com.github.1c-syntax", "utils", "f1694d9c")
-    api("com.github.1c-syntax", "mdclasses", "0.10.3")
-    api("io.github.1c-syntax", "bsl-common-library", "0.3.0")
-    api("io.github.1c-syntax", "supportconf", "0.1.1")
+    api("io.github.1c-syntax", "utils", "0.6.2")
+    api("io.github.1c-syntax", "mdclasses", "0.15.0-rc.1")
+    api("io.github.1c-syntax", "bsl-common-library", "0.8.0-rc.1")
+    api("io.github.1c-syntax", "supportconf", "0.14.1") {
+        exclude("io.github.1c-syntax", "bsl-common-library")
+    }
+    api("io.github.1c-syntax", "bsl-parser-core", "0.1.0")
 
     // JLanguageTool
-    implementation("org.languagetool", "languagetool-core", languageToolVersion)
+    implementation("org.languagetool", "languagetool-core", languageToolVersion){
+        exclude("commons-logging", "commons-logging")
+    }
     implementation("org.languagetool", "language-en", languageToolVersion)
     implementation("org.languagetool", "language-ru", languageToolVersion)
 
     // AOP
-    implementation("org.aspectj", "aspectjrt", "1.9.7")
+    implementation("org.aspectj", "aspectjrt", "1.9.22.1")
 
     // commons utils
-    implementation("commons-io", "commons-io", "2.11.0")
-    implementation("org.apache.commons", "commons-lang3", "3.12.0")
-    implementation("commons-beanutils", "commons-beanutils", "1.9.4")
+    implementation("commons-io", "commons-io", "2.17.0")
+    implementation("org.apache.commons", "commons-lang3", "3.17.0")
+    implementation("commons-beanutils", "commons-beanutils", "1.9.4"){
+        exclude("commons-logging", "commons-logging")
+    }
     implementation("org.apache.commons", "commons-collections4", "4.4")
+    implementation("org.apache.commons", "commons-exec", "1.4.0")
 
     // progress bar
-    implementation("me.tongfei", "progressbar", "0.9.2")
+    implementation("me.tongfei", "progressbar", "0.10.1")
 
     // (de)serialization
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
 
     // graphs
-    implementation("org.jgrapht", "jgrapht-core", "1.5.1")
+    implementation("org.jgrapht", "jgrapht-core", "1.5.2")
 
     // SARIF serialization
     implementation("com.contrastsecurity", "java-sarif", "2.0")
 
     // Sentry
-    implementation("io.sentry:sentry-spring-boot-starter")
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
     implementation("io.sentry:sentry-logback")
 
+    // CONSTRAINTS
+    implementation("com.google.guava:guava") {
+        version {
+            strictly("33.3.1-jre")
+       }
+    }
+    
     // COMPILE
-
-    // stat analysis
-    compileOnly("com.google.code.findbugs", "jsr305", "3.0.2")
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.9.0")
 
     // TEST
 
@@ -130,13 +150,13 @@ dependencies {
     }
 
     // test utils
-    testImplementation("com.ginsberg", "junit5-system-exit", "1.1.2")
-    testImplementation("org.awaitility", "awaitility", "4.1.1")
+    testImplementation("org.jmockit", "jmockit", "1.49")
+    testImplementation("org.awaitility", "awaitility", "4.2.2")
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withSourcesJar()
     withJavadocJar()
 }
@@ -177,6 +197,9 @@ tasks.test {
     reports {
         html.required.set(true)
     }
+
+    val jmockitPath = classpath.find { it.name.contains("jmockit") }!!.absolutePath
+    jvmArgs("-javaagent:${jmockitPath}")
 }
 
 tasks.check {
@@ -187,7 +210,7 @@ tasks.check {
 tasks.jacocoTestReport {
     reports {
         xml.required.set(true)
-        xml.outputLocation.set(File("$buildDir/reports/jacoco/test/jacoco.xml"))
+        xml.outputLocation.set(File("${layout.buildDirectory.get()}/reports/jacoco/test/jacoco.xml"))
     }
 }
 
@@ -207,12 +230,12 @@ tasks.generateDiagnosticDocs {
     doLast {
         val resourcePath = tasks["processResources"].outputs.files.singleFile
         copy {
-            from("$buildDir/docs/diagnostics")
+            from("${layout.buildDirectory.get()}/docs/diagnostics")
             into("$resourcePath/com/github/_1c_syntax/bsl/languageserver/diagnostics/ru")
         }
 
         copy {
-            from("$buildDir/docs/en/diagnostics")
+            from("${layout.buildDirectory.get()}/docs/en/diagnostics")
             into("$resourcePath/com/github/_1c_syntax/bsl/languageserver/diagnostics/en")
         }
     }
@@ -254,7 +277,7 @@ sonarqube {
         property("sonar.projectKey", "1c-syntax_bsl-language-server")
         property("sonar.projectName", "BSL Language Server")
         property("sonar.exclusions", "**/gen/**/*.*")
-        property("sonar.coverage.jacoco.xmlReportPaths", "$buildDir/reports/jacoco/test/jacoco.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacoco.xml")
     }
 }
 
@@ -362,4 +385,10 @@ nexusStaging {
 
 tasks.withType<GenerateModuleMetadata> {
     enabled = false
+}
+
+fun buildTime(): String {
+    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    formatter.timeZone = TimeZone.getTimeZone("UTC")
+    return formatter.format(Date())
 }
